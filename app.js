@@ -9,6 +9,72 @@ function guid() {
         s4() + '-' + s4() + s4() + s4();
 }
 
+var Key = function(v) {
+    this.val = Math.pow(2,32)*Math.random();
+    if(typeof(v) == "number"){
+        this.val = v;
+    }
+    else {
+        this.val = v.val;
+    }
+    this.hash = this.val.toString(16);
+    while(this.hash.length != 8){
+        this.hash = "0"+this.hash;
+    }
+}
+
+Key.prototype.distance = function(k) {
+    return Math.abs(this.val-k.val);
+}
+
+Key.prototype.match = function(k) {
+    var i;
+    for(i = 0 ; i < k.hash.length && this.hash.length; i++){
+        if(this.hash[i] != k.hash[i]){
+            break;
+        }
+    }
+    return i;
+}
+
+Key.prototype.closest = function(keys) {
+    var closest = null;
+    var dist = 9007199254740992;
+    for(var i=0; i < keys.length; i++){
+        var d = keys[i].distance(this);
+        if(d<dist){
+            closest = keys[i];
+            dist = d;
+        }
+    }
+    return closest;
+}
+
+Key.prototype.closestKeys = function(keys,n) {
+    var _this = this;
+    var comp = function(a,b){
+        var da = _this.distance(a);
+        var db = _this.distance(b);
+        if(da<db){ return -1 }
+        if(da>db){ return 1 }
+        return 0;
+    }
+    keys = keys.sort(comp);
+    var closest = [];
+    for(var i = 0 ; i < keys.length && i < n; i++){
+        closest.push(keys[i]);
+    }
+    return closest;
+}
+
+Key.prototype.isInRange = function(j,k) {
+    return (this.val >= j.val) && (this.val <= k.val);
+}
+
+Key.prototype.toString = function() {
+    return "[Key "+this.hash+"]";
+}
+
 var Emitter = function () {
     this.channels = {};
 };
@@ -55,11 +121,15 @@ var App = function(key){
     this.guid = guid();
     this.key = key;
     this.mux = new Mux({maxSize:1000});
+
+    this.fire("message");
+    this.fire("foward");
+    this.fire("leaf");
 }
 
 App.prototype = Object.create(Emitter.prototype);
 
-App.prototype.send = function(obj){
+App.prototype.send = function(obj,key){
     this.mux.send(JSON.stringify(obj));
 }
 
