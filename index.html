@@ -1,0 +1,60 @@
+<html>
+<head>
+    <script src="http://code.jquery.com/jquery-2.0.1.min.js"></script>
+    <script src="http://cdn.peerjs.com/0/peer.min.js"></script>
+    <script src="mux.js"></script>
+    <script src="app.js"></script>
+</head>
+<body>
+<div class="headerBar">
+<button class="buttonHost">Host</button><button class="buttonJoin">Join</button>
+</div>
+</body>
+<script>
+    var key = '<peer js key>';
+
+    var startServer = function(){
+        var app = new App(key);
+        app.on("connected",function(){
+            console.log("connected with peer")
+        });
+        app.on("disconnected",function(){
+            console.log("disconnected with peer")
+            $('.headerBar').fadeIn();
+        });
+        app.on("message",function(obj){
+            console.log(obj.data);
+            app.send({data:"what's up?"});
+        });
+        app.on("error",function(err){
+            console.log(err);
+        });
+        app.host();
+        $(document.body).append(app.guid);
+        $('.headerBar').fadeOut();
+    };
+
+    var startClient = function(){
+        var app = new App(key);
+        app.on("connected",function(){
+            console.log("connected with peer")
+            app.send({data:"Hey!"});
+        })
+        app.on("disconnected",function(){
+            console.log("disconnected with peer")
+            $('.headerBar').fadeIn();
+        })
+        app.on("message",function(obj){
+            console.log(obj.data);
+        })
+        app.on("error",function(err){
+            console.log(err);
+        })
+        app.join(window.prompt());
+        $('.headerBar').fadeOut();
+    };
+
+    $('.buttonHost').click(startServer);
+    $('.buttonJoin').click(startClient);
+</script>
+</html>
